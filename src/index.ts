@@ -1,6 +1,7 @@
 // Import lit-html functions
 import { html, render } from 'lit-html';
 import * as R from 'ramda';
+const axios = require('axios');
 
 window['state'] = window['state'] || {};
 
@@ -12,17 +13,16 @@ const arr = [
 
 const state = (name) => window['state'][name];
 
+const paint = () => render(state('template')(), state('selector'));
+
 const setState = (name, value) => (window['state'][name] = value);
 
 const initState = (stateObject) =>
   R.forEachObjIndexed((value, key) => setState(key, value), stateObject);
 
 // init state
-const defaultState = () =>
-  initState({
-    counter: 0,
-    sections: [],
-  });
+const defaultState = (stateObj) =>
+  initState({ ...stateObj, initialState: stateObj });
 
 const div = ({ classNames = '' }, ...children) =>
   html` <div class="${classNames}">
@@ -47,6 +47,31 @@ const p = ({ classNames = '' }, ...children) => {
     ${children.join('')}
   </p>`;
 };
+
+const userInfo = (user) => html`
+  <img src="${user.avatar_url}" width="200" height="200" />
+  <div>${user.login}</div>
+  <div>${user.name}</div>
+  <br /><br />
+`;
+
+const usersRequest = async () =>
+  axios
+    .get(`https://api.github.com/user/${state('userId')}`)
+    .then(function (response) {
+      setState('users', [...state('users'), response.data]);
+
+      paint();
+      // handle success
+      console.log(response);
+    })
+    .catch(function (error) {
+      // handle error
+      console.log(error);
+    })
+    .then(function () {
+      // always executed
+    });
 
 const htmlSection = () =>
   html`
@@ -92,25 +117,23 @@ const myTemplate = () =>
     </button>`,
     html`<br /><br />
       <button
-        @click=${(e) => {
-          console.log(state('sections'));
-          setState('sections', [...state('sections'), htmlSection()]);
-          render(myTemplate(), document.body);
+        @click=${() => {
+          usersRequest();
+          setState('userId', state('userId') + 1);
         }}
       >
-        Add Block Thing
+        Add Next User
       </button>`,
     html`<br /><br />
       <button
         @click=${(e) => {
           defaultState();
-          render(myTemplate(), document.body);
+          paint();
         }}
       >
         Clear State
       </button>`,
-    html`<div>${R.map((section) => section, state('sections'))}</div>
-      <div>${htmlSection()}</div>`,
+    html`<div>${R.map((user) => userInfo(user), state('users'))}</div>`,
 
     // html` <p class="" >hey cheif</p>`
   );
@@ -122,7 +145,17 @@ const myTemplate = () =>
 //   </ul>
 // `;
 
-defaultState();
+defaultState({
+  counter: 0,
+  sections: [],
+  userId: 1,
+  users: [],
+  template: myTemplate,
+  selector: document.querySelector('#container'),
+});
+
+paint();
+
+// usersRequest();
 
 // Render the template with some data
-render(myTemplate(), document.body);
