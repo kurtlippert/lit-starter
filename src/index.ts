@@ -1,161 +1,90 @@
 // Import lit-html functions
 import { html, render } from 'lit-html';
-import * as R from 'ramda';
-const axios = require('axios');
+import { repeat } from 'lit-html/directives/repeat';
+import axios from 'axios';
 
-window['state'] = window['state'] || {};
+// typings
+interface User {
+  id: number;
+  avatar_url: string;
+  login: string;
+  name: string;
+}
 
-const arr = [
-  { a: 1, b: 2, c: 3 },
-  { a: 4, b: 5, c: 6 },
-  { a: 7, b: 8, c: 9, d: null },
-];
+interface Model {
+  name: string;
+  counter: number;
+  score: number;
+  users: User[];
+  userId: number;
+  selector: HTMLElement;
+}
 
-const state = (name) => window['state'][name];
-
-const paint = () => render(state('template')(), state('selector'));
-
-const setState = (name, value) => (window['state'][name] = value);
-
-const initState = (stateObject) =>
-  R.forEachObjIndexed((value, key) => setState(key, value), stateObject);
-
-// init state
-const defaultState = (stateObj) =>
-  initState({ ...stateObj, initialState: stateObj });
-
-const div = ({ classNames = '' }, ...children) =>
-  html` <div class="${classNames}">
-    ${children}
-  </div>`;
-
-const ul = ({ classNames = '' }, ...children) =>
-  html` <ul class="${classNames}">
-    ${children}
-    <ul></ul>
-  </ul>`;
-
-const li = ({ classNames = '' }, ...children) =>
-  html` <li class="${classNames}">
-    ${children}
-  </li>`;
-
-const t = (...children) => html`${children}`;
-
-const p = ({ classNames = '' }, ...children) => {
-  return html` <p class="${classNames}">
-    ${children.join('')}
-  </p>`;
+const initialModel: Model = {
+  name: 'World',
+  counter: 0,
+  score: 0,
+  users: [],
+  userId: 1,
+  selector: document.body,
 };
 
-const userInfo = (user) => html`
+const userInfo = (user: User) => html`
   <img src="${user.avatar_url}" width="200" height="200" />
   <div>${user.login}</div>
   <div>${user.name}</div>
   <br /><br />
 `;
 
-const usersRequest = async () =>
-  axios
-    .get(`https://api.github.com/user/${state('userId')}`)
-    .then(function (response) {
-      setState('users', [...state('users'), response.data]);
+// const view = ({ model, up }) => html`
+const view = (model: Model) => html`
+  <button
+    @click=${() => {
+      render(view(initialModel), initialModel.selector);
+    }}
+  >
+    Clear State
+  </button>
+  <br /><br />
+  <button
+    @click=${() => {
+      const newModel = { ...model, counter: model.counter + 1 };
+      render(view(newModel), model.selector);
+    }}
+  >
+    inc
+  </button>
+  <p>${model.counter}</p>
+  <button
+    @click=${() => {
+      const newModel = { ...model, counter: model.counter - 1 };
+      render(view(newModel), model.selector);
+    }}
+  >
+    dec
+  </button>
+  <br /><br />
+  <button
+    @click=${() => {
+      axios
+        .get(`https://api.github.com/user/${model.userId}`)
+        .then((response: any) => {
+          const newModel = {
+            ...model,
+            users: [...model.users, response.data],
+            userId: model.userId + 1,
+          };
+          render(view(newModel), model.selector);
+        })
+        .catch((error) => console.log(error));
+    }}
+  >
+    Add Next User
+  </button>
+  <br /><br />
+  <div>
+    ${repeat(model.users, (user) => user.id, userInfo)}
+  </div>
+`;
 
-      paint();
-      // handle success
-      console.log(response);
-    })
-    .catch(function (error) {
-      // handle error
-      console.log(error);
-    })
-    .then(function () {
-      // always executed
-    });
-
-const htmlSection = () =>
-  html`
-    <div>
-      <p>Some placeholder content</p>
-      <ul>
-        <li>item 1</li>
-        <li>item 2</li>
-        <li>item 3</li>
-      </ul>
-    </div>
-  `;
-
-// Define a template function
-const myTemplate = () =>
-  t(
-    // p({}, 'hey chief'),
-    // ul(
-    //   {},
-    //   R.map((item) => li({}, `${item.a} ${item.b} ${item.c}`)),
-    // ),
-    p({}, 'hey chief'),
-    ul(
-      {},
-      R.map((item) => li({}, `${item.a} ${item.b} ${item.c}`), arr),
-    ),
-    html`<button
-      @click=${(e) => {
-        setState('counter', state('counter') + 1);
-        render(myTemplate(), document.body);
-      }}
-    >
-      inc
-    </button>`,
-    html`<p>${state('counter')}</p>`,
-    html`<button
-      @click=${(e) => {
-        setState('counter', state('counter') - 1);
-        render(myTemplate(), document.body);
-      }}
-    >
-      dec
-    </button>`,
-    html`<br /><br />
-      <button
-        @click=${() => {
-          usersRequest();
-          setState('userId', state('userId') + 1);
-        }}
-      >
-        Add Next User
-      </button>`,
-    html`<br /><br />
-      <button
-        @click=${(e) => {
-          defaultState();
-          paint();
-        }}
-      >
-        Clear State
-      </button>`,
-    html`<div>${R.map((user) => userInfo(user), state('users'))}</div>`,
-
-    // html` <p class="" >hey cheif</p>`
-  );
-
-// const myTemplate = (name) => html`
-//   <p>hey chief</p>
-//   <ul>
-//     ${R.map((item) => html`<li>${item.a} ${item.b} ${item.c}</li>`, arr)}
-//   </ul>
-// `;
-
-defaultState({
-  counter: 0,
-  sections: [],
-  userId: 1,
-  users: [],
-  template: myTemplate,
-  selector: document.querySelector('#container'),
-});
-
-paint();
-
-// usersRequest();
-
-// Render the template with some data
+render(view(initialModel), initialModel.selector);
