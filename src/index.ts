@@ -2,6 +2,7 @@
 import { html, render } from 'lit-html';
 import { repeat } from 'lit-html/directives/repeat';
 import axios from 'axios';
+import { init } from 'ramda';
 
 // typings
 interface User {
@@ -29,6 +30,15 @@ const initialModel: Model = {
   selector: document.body,
 };
 
+Object.freeze(initialModel);
+
+const init = async (entry: TemplateResult, model: Model) => {
+  // stuff to do b4 the first render
+
+  // first render
+  render(entry(initialModel), initialModel.selector);
+};
+
 const userInfo = (user: User) => html`
   <img src="${user.avatar_url}" width="200" height="200" />
   <div>${user.login}</div>
@@ -36,7 +46,6 @@ const userInfo = (user: User) => html`
   <br /><br />
 `;
 
-// const view = ({ model, up }) => html`
 const view = (model: Model) => html`
   <button
     @click=${() => {
@@ -68,7 +77,7 @@ const view = (model: Model) => html`
     @click=${() => {
       axios
         .get(`https://api.github.com/user/${model.userId}`)
-        .then((response: any) => {
+        .then((response) => {
           const newModel = {
             ...model,
             users: [...model.users, response.data],
@@ -88,3 +97,17 @@ const view = (model: Model) => html`
 `;
 
 render(view(initialModel), initialModel.selector);
+
+axios
+  .get(`https://api.github.com/user/${initialModel.userId}`)
+  .then((response) => {
+    render(
+      view({
+        ...initialModel,
+        users: [...initialModel.users, response.data],
+        userId: initialModel.userId + 1,
+      }),
+      initialModel.selector,
+    );
+  })
+  .catch((error) => console.log(error));

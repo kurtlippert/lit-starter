@@ -17,7 +17,8 @@
     "axios": "0.21.0",
     "lit-html": "^1.1.2",
     "lit-up": "1.1.1",
-    "ramda": "0.27.1"
+    "ramda": "0.27.1",
+    "ts-lit-plugin": "1.2.1"
   },
   "devDependencies": {
     "parcel-bundler": "^1.6.1"
