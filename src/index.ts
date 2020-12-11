@@ -2,47 +2,61 @@
 import { html, render } from 'lit-html';
 import { repeat } from 'lit-html/directives/repeat';
 import axios from 'axios';
-import { init } from 'ramda';
 
 // typings
-interface User {
+interface Photo {
   id: number;
-  avatar_url: string;
-  login: string;
-  name: string;
+  title: string;
+  thumbnailUrl: string;
 }
 
 interface Model {
-  name: string;
   counter: number;
-  score: number;
-  users: User[];
-  userId: number;
+  photos: Photo[];
+  photoId: number;
   selector: HTMLElement;
 }
 
 const initialModel: Model = {
-  name: 'World',
   counter: 0,
-  score: 0,
-  users: [],
-  userId: 1,
+  photos: [],
+  photoId: 1,
   selector: document.body,
 };
 
 Object.freeze(initialModel);
 
-const init = async (entry: TemplateResult, model: Model) => {
+const init = async (view: any, model: Model) => {
   // stuff to do b4 the first render
+  // --> get the first user
+  const photoResponse = await axios.get(
+    `https://jsonplaceholder.typicode.com/photos/${model.photoId}`,
+  );
+  // console.log(userResponse);
+  const withFirstPhoto = {
+    photos: [photoResponse.data],
+    userId: model.photoId + 1,
+  };
+
+  // --> start the counter at '10'
+  const withCounterAt10 = {
+    counter: 10,
+  };
 
   // first render
-  render(entry(initialModel), initialModel.selector);
+  render(
+    view({
+      ...model,
+      ...withFirstPhoto,
+      ...withCounterAt10,
+    }),
+    model.selector,
+  );
 };
 
-const userInfo = (user: User) => html`
-  <img src="${user.avatar_url}" width="200" height="200" />
-  <div>${user.login}</div>
-  <div>${user.name}</div>
+const photoInfo = (photo: Photo) => html`
+  <img src="${photo.thumbnailUrl}" />
+  <div>${photo.title}</div>
   <br /><br />
 `;
 
@@ -76,12 +90,12 @@ const view = (model: Model) => html`
   <button
     @click=${() => {
       axios
-        .get(`https://api.github.com/user/${model.userId}`)
+        .get(`https://jsonplaceholder.typicode.com/photos/${model.photoId}`)
         .then((response) => {
           const newModel = {
             ...model,
-            users: [...model.users, response.data],
-            userId: model.userId + 1,
+            photos: [...model.photos, response.data],
+            photoId: model.photoId + 1,
           };
           render(view(newModel), model.selector);
         })
@@ -92,22 +106,9 @@ const view = (model: Model) => html`
   </button>
   <br /><br />
   <div>
-    ${repeat(model.users, (user) => user.id, userInfo)}
+    ${repeat(model.photos, (photo) => photo.id, photoInfo)}
   </div>
 `;
 
-render(view(initialModel), initialModel.selector);
-
-axios
-  .get(`https://api.github.com/user/${initialModel.userId}`)
-  .then((response) => {
-    render(
-      view({
-        ...initialModel,
-        users: [...initialModel.users, response.data],
-        userId: initialModel.userId + 1,
-      }),
-      initialModel.selector,
-    );
-  })
-  .catch((error) => console.log(error));
+// render(view(initialModel), initialModel.selector);
+init(view, initialModel);
