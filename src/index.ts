@@ -28,11 +28,12 @@ Object.freeze(initialModel);
 
 const init = async (view: any, model: Model) => {
   // stuff to do b4 the first render
+
   // --> get the first user
   const photoResponse = await axios.get(
     `https://jsonplaceholder.typicode.com/photos/${model.photoId}`,
   );
-  // console.log(userResponse);
+
   const withFirstPhoto = {
     photos: [photoResponse.data],
     userId: model.photoId + 1,
