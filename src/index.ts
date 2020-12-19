@@ -1,6 +1,7 @@
 // Import lit-html functions
 import { html, render } from 'lit-html';
 import { repeat } from 'lit-html/directives/repeat';
+import { Model } from './helpers';
 import axios from 'axios';
 
 // typings
@@ -10,23 +11,25 @@ interface Photo {
   thumbnailUrl: string;
 }
 
-interface Model {
+interface ViewModel {
   counter: number;
   photos: Photo[];
   photoId: number;
   selector: HTMLElement;
 }
 
-const initialModel: Model = {
+// model
+// 'Model' helper function returns an immutable
+// js object
+const initialModel = Model<ViewModel>({
   counter: 0,
   photos: [],
   photoId: 1,
   selector: document.body,
-};
+});
 
-Object.freeze(initialModel);
-
-const init = async (view: any, model: Model) => {
+// init
+const init = async (view: any, model: ViewModel) => {
   // stuff to do b4 the first render
 
   // --> get the first user
@@ -55,13 +58,15 @@ const init = async (view: any, model: Model) => {
   );
 };
 
+// view helpers
 const photoInfo = (photo: Photo) => html`
   <img src="${photo.thumbnailUrl}" />
   <div>${photo.title}</div>
   <br /><br />
 `;
 
-const view = (model: Model) => html`
+// main view
+const view = (model: ViewModel) => html`
   <button
     @click=${() => {
       render(view(initialModel), initialModel.selector);
