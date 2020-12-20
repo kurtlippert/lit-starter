@@ -1,5 +1,5 @@
 // Import lit-html functions
-import { html, render } from 'lit-html';
+import { html, render, TemplateResult } from 'lit-html';
 import { repeat } from 'lit-html/directives/repeat';
 import { Model } from './helpers';
 import axios from 'axios';
@@ -18,6 +18,8 @@ interface ViewModel {
   selector: HTMLElement;
 }
 
+type View = (model: ViewModel) => TemplateResult;
+
 // model
 // 'Model' helper function returns an immutable
 // js object
@@ -29,10 +31,10 @@ const initialModel = Model<ViewModel>({
 });
 
 // init
-const init = async (view: any, model: ViewModel) => {
+const init = async (view: View, model: ViewModel) => {
   // stuff to do b4 the first render
 
-  // --> get the first user
+  // --> get the first photo
   const photoResponse = await axios.get(
     `https://jsonplaceholder.typicode.com/photos/${model.photoId}`,
   );
@@ -66,7 +68,7 @@ const photoInfo = (photo: Photo) => html`
 `;
 
 // main view
-const view = (model: ViewModel) => html`
+const view: View = (model: ViewModel) => html`
   <button
     @click=${() => {
       render(view(initialModel), initialModel.selector);

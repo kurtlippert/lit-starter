@@ -1,14 +1,15 @@
-import { html } from 'lit-html';
+import { html, TemplateResult } from 'lit-html';
 
-export const div = ({ classNames = '' }, ...children) =>
+type Children = TemplateResult[] | string[];
+
+export const div = ({ classNames = '' }, ...children: Children) =>
   html` <div class="${classNames}">
     ${children}
   </div>`;
 
-export const ul = ({ classNames = '' }, ...children) =>
+export const ul = ({ classNames = '' }, ...children: Children) =>
   html` <ul class="${classNames}">
     ${children}
-    <ul></ul>
   </ul>`;
 
 export const li = ({ classNames = '' }, ...children) =>
