@@ -1,8 +1,15 @@
 // Import lit-html functions
 import { html, render, TemplateResult } from 'lit-html';
 import { repeat } from 'lit-html/directives/repeat';
+import { until } from 'lit-html/directives/until';
 import { Model } from './helpers';
 import axios from 'axios';
+import { eitherGet } from './server';
+import { pipe } from 'fp-ts/function';
+import { either, right, left } from 'fp-ts/Either';
+import { toString } from 'ramda';
+
+eitherGet('https://httpstat.us/200').then((resp) => console.log(resp));
 
 // typings
 interface Photo {
@@ -67,8 +74,19 @@ const photoInfo = (photo: Photo) => html`
   <br /><br />
 `;
 
+// const handleGet = ifElse(
+
+// )
+
 // main view
 const view: View = (model: ViewModel) => html`
+  <div>
+    ${until(
+      eitherGet('https://httpstat.us/200').then((resp) => resp.right.code),
+      // .then((resp) => Json.parse(resp.right)),
+      html`loading...`,
+    )}
+  </div>
   <button
     @click=${() => {
       render(view(initialModel), initialModel.selector);
