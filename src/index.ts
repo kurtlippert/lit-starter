@@ -4,6 +4,7 @@ import { repeat } from 'lit-html/directives/repeat';
 import { Immutable } from './helpers';
 import axios from 'axios';
 import { eitherGet } from './server';
+import { Either, right, left, isLeft, isRight } from 'fp-ts/Either';
 
 // typings
 interface Photo {
@@ -14,8 +15,10 @@ interface Photo {
 
 interface State {
   counter: number;
+  arePhotosLoading: boolean;
   photos: Photo[];
   photoId: number;
+  isStuffLoading: boolean;
   testStuff: string;
 }
 
@@ -23,9 +26,11 @@ type View = () => TemplateResult;
 
 const initialState = Immutable<State>({
   counter: 0,
+  arePhotosLoading: false,
   photos: [],
   photoId: 1,
-  testStuff: 'Loading...',
+  isStuffLoading: false,
+  testStuff: '',
 });
 
 type Store<A> = [(newValue: A) => void, () => A];
@@ -48,6 +53,44 @@ const selector = document.getElementById('app');
 
 const reRender = (view: View) => render(view(), selector);
 
+const getStuff = (view: View) =>
+  eitherGet('https://httpstat.us/200', JSON.stringify, JSON.stringify).then(
+    (resp) => {
+      setState({
+        ...state(),
+        testStuff: resp,
+        isStuffLoading: false,
+      });
+      reRender(view);
+    },
+  );
+
+const getPhotos = (view: View) =>
+  eitherGet(
+    `https://jsonplaceholder.typicode.com/photos/${state().photoId}`,
+
+    // decoders?
+    // maybe add an 'errorMessage
+    (error) => ({
+      id: '',
+      title: `${JSON.stringify(error)}`,
+      thumbnailUrl: '',
+    }),
+    (photo) => ({
+      id: photo.id,
+      title: photo.title,
+      thumbnailUrl: photo.thumbnailUrl,
+    }),
+  ).then((resp) => {
+    setState({
+      ...state(),
+      photos: [...state().photos, resp],
+      arePhotosLoading: false,
+      photoId: state().photoId + 1,
+    });
+    reRender(view);
+  });
+
 // view helpers
 const photoInfo = (photo: Photo) => html`
   <img src="${photo.thumbnailUrl}" />
@@ -61,11 +104,37 @@ const view = () => html`
   <br /><br />
   <button
     @click=${() => {
+      setState({ ...state(), isStuffLoading: true });
+      reRender(view);
+      getStuff(view);
+    }}
+  >
+    Get The Stuff
+  </button>
+  <span>${state().isStuffLoading ? html`Loading...` : ''}</span>
+  <br /><br />
+  <button
+    @click=${() => {
       setState(initialState);
       reRender(view);
     }}
   >
     Clear State
+  </button>
+  <br /><br />
+  <button
+    @click=${() => {
+      setState({
+        ...initialState,
+        arePhotosLoading: true,
+        isStuffLoading: true,
+      });
+      reRender(view);
+      getPhotos(view);
+      getStuff(view);
+    }}
+  >
+    Clear State (and refetch)
   </button>
   <br /><br />
   <button
@@ -88,21 +157,14 @@ const view = () => html`
   <br /><br />
   <button
     @click=${() => {
-      axios
-        .get(`https://jsonplaceholder.typicode.com/photos/${state().photoId}`)
-        .then((response) => {
-          setState({
-            ...state(),
-            photos: [...state().photos, response.data],
-            photoId: state().photoId + 1,
-          });
-          reRender(view);
-        })
-        .catch((error) => console.log(error));
+      setState({ ...state(), arePhotosLoading: true });
+      reRender(view);
+      getPhotos(view);
     }}
   >
     Add Next User
   </button>
+  <span>${state().arePhotosLoading ? html`Loading...` : ''}</span>
   <br /><br />
   <div>
     ${repeat(state().photos, (photo) => photo.id, photoInfo)}
@@ -110,31 +172,15 @@ const view = () => html`
 `;
 
 // init cont...
-eitherGet('https://httpstat.us/200', JSON.stringify, JSON.stringify).then(
-  (resp) => {
-    setState({ ...state(), testStuff: resp });
-    reRender(view);
-  },
-);
-
-eitherGet<Photo, Photo>(
-  `https://jsonplaceholder.typicode.com/photos/${state().photoId}`,
-
-  // decoders?
-  (error) => ({ id: '', title: `${error.message}`, thumbnailUrl: '' }),
-  (photo: Photo) => ({
-    id: photo.id,
-    title: photo.title,
-    thumbnailUrl: photo.thumbnailUrl,
-  }),
-).then((resp) => {
-  setState({
-    ...state(),
-    photos: [...state().photos, resp],
-    photoId: state().photoId + 1,
-  });
-  reRender(view);
+setState({
+  ...state(),
+  arePhotosLoading: true,
+  isStuffLoading: true,
 });
+
+getPhotos(view);
+
+getStuff(view);
 
 setState({ ...state(), counter: 10 });
 

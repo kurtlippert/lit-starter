@@ -9,10 +9,10 @@ type Err = {
   stackTrace: string;
 };
 
-const eitherGet = <A, B>(
+const eitherGet = <A>(
   url: string,
-  errorHandle: (error: Err) => B,
-  okHandle: (ok: A) => B,
+  errorHandle: (error: Err) => A,
+  okHandle: (ok: A) => A,
 ) =>
   pipe(
     TE.tryCatch(
