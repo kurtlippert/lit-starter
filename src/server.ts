@@ -1,10 +1,19 @@
-import * as TE from 'fp-ts/TaskEither';
-import * as E from 'fp-ts/Either';
 import { pipe } from 'fp-ts/function';
 import axios from 'axios';
 import { toString } from 'ramda';
+import * as T from 'fp-ts/Task';
+import * as TE from 'fp-ts/TaskEither';
 
-const eitherGet = (url: string) =>
+type Err = {
+  message: string;
+  stackTrace: string;
+};
+
+const eitherGet = <A, B>(
+  url: string,
+  errorHandle: (error: Err) => B,
+  okHandle: (ok: A) => B,
+) =>
   pipe(
     TE.tryCatch(
       () => axios.get(url),
@@ -14,6 +23,10 @@ const eitherGet = (url: string) =>
       }),
     ),
     TE.map((resp) => resp.data),
+    TE.fold(
+      (error) => T.of(errorHandle(error)),
+      (ok) => T.of(okHandle(ok)),
+    ),
   )();
 
 //   console.log(result);

@@ -1,71 +1,52 @@
 // Import lit-html functions
 import { html, render, TemplateResult } from 'lit-html';
 import { repeat } from 'lit-html/directives/repeat';
-import { until } from 'lit-html/directives/until';
-import { Model } from './helpers';
+import { Immutable } from './helpers';
 import axios from 'axios';
 import { eitherGet } from './server';
-import { pipe } from 'fp-ts/function';
-import { either, right, left } from 'fp-ts/Either';
-import { toString } from 'ramda';
-
-eitherGet('https://httpstat.us/200').then((resp) => console.log(resp));
 
 // typings
 interface Photo {
-  id: number;
+  id: string;
   title: string;
   thumbnailUrl: string;
 }
 
-interface ViewModel {
+interface State {
   counter: number;
   photos: Photo[];
   photoId: number;
-  selector: HTMLElement;
+  testStuff: string;
 }
 
-type View = (model: ViewModel) => TemplateResult;
+type View = () => TemplateResult;
 
-// model
-// 'Model' helper function returns an immutable
-// js object
-const initialModel = Model<ViewModel>({
+const initialState = Immutable<State>({
   counter: 0,
   photos: [],
   photoId: 1,
-  selector: document.body,
+  testStuff: 'Loading...',
 });
 
+type Store<A> = [(newValue: A) => void, () => A];
+
 // init
-const init = async (view: View, model: ViewModel) => {
-  // stuff to do b4 the first render
+const store = <A>(initialValue: A): Store<A> => {
+  let state = initialValue;
+  return [
+    // setState
+    (newValue: A) => (state = newValue),
 
-  // --> get the first photo
-  const photoResponse = await axios.get(
-    `https://jsonplaceholder.typicode.com/photos/${model.photoId}`,
-  );
-
-  const withFirstPhoto = {
-    photos: [photoResponse.data],
-    userId: model.photoId + 1,
-  };
-
-  // --> start the counter at '10'
-  const withCounterAt10 = {
-    counter: 10,
-  };
-
-  // first render
-  render(
-    view({
-      ...model,
-      ...withFirstPhoto,
-      ...withCounterAt10,
-    }),
-    model.selector,
-  );
+    // getState
+    () => state,
+  ];
 };
+
+const [setState, state] = store(initialState);
+
+const selector = document.getElementById('app');
+
+const reRender = (view: View) => render(view(), selector);
 
 // view helpers
 const photoInfo = (photo: Photo) => html`
@@ -74,22 +55,14 @@ const photoInfo = (photo: Photo) => html`
   <br /><br />
 `;
 
-// const handleGet = ifElse(
-
-// )
-
 // main view
-const view: View = (model: ViewModel) => html`
-  <div>
-    ${until(
-      eitherGet('https://httpstat.us/200').then((resp) => resp.right.code),
-      // .then((resp) => Json.parse(resp.right)),
-      html`loading...`,
-    )}
-  </div>
+const view = () => html`
+  ${state().testStuff}
+  <br /><br />
   <button
     @click=${() => {
-      render(view(initialModel), initialModel.selector);
+      setState(initialState);
+      reRender(view);
     }}
   >
     Clear State
@@ -97,17 +70,17 @@ const view: View = (model: ViewModel) => html`
   <br /><br />
   <button
     @click=${() => {
-      const newModel = { ...model, counter: model.counter + 1 };
-      render(view(newModel), model.selector);
+      setState({ ...state(), counter: state().counter + 1 });
+      reRender(view);
     }}
   >
     inc
   </button>
-  <p>${model.counter}</p>
+  <p>${state().counter}</p>
   <button
     @click=${() => {
-      const newModel = { ...model, counter: model.counter - 1 };
-      render(view(newModel), model.selector);
+      setState({ ...state(), counter: state().counter - 1 });
+      reRender(view);
     }}
   >
     dec
@@ -116,14 +89,14 @@ const view: View = (model: ViewModel) => html`
   <button
     @click=${() => {
       axios
-        .get(`https://jsonplaceholder.typicode.com/photos/${model.photoId}`)
+        .get(`https://jsonplaceholder.typicode.com/photos/${state().photoId}`)
         .then((response) => {
-          const newModel = {
-            ...model,
-            photos: [...model.photos, response.data],
-            photoId: model.photoId + 1,
-          };
-          render(view(newModel), model.selector);
+          setState({
+            ...state(),
+            photos: [...state().photos, response.data],
+            photoId: state().photoId + 1,
+          });
+          reRender(view);
         })
         .catch((error) => console.log(error));
     }}
@@ -132,9 +105,38 @@ const view: View = (model: ViewModel) => html`
   </button>
   <br /><br />
   <div>
-    ${repeat(model.photos, (photo) => photo.id, photoInfo)}
+    ${repeat(state().photos, (photo) => photo.id, photoInfo)}
   </div>
 `;
 
-// render(view(initialModel), initialModel.selector);
-init(view, initialModel);
+// init cont...
+eitherGet('https://httpstat.us/200', JSON.stringify, JSON.stringify).then(
+  (resp) => {
+    setState({ ...state(), testStuff: resp });
+    reRender(view);
+  },
+);
+
+eitherGet<Photo, Photo>(
+  `https://jsonplaceholder.typicode.com/photos/${state().photoId}`,
+
+  // decoders?
+  (error) => ({ id: '', title: `${error.message}`, thumbnailUrl: '' }),
+  (photo: Photo) => ({
+    id: photo.id,
+    title: photo.title,
+    thumbnailUrl: photo.thumbnailUrl,
+  }),
+).then((resp) => {
+  setState({
+    ...state(),
+    photos: [...state().photos, resp],
+    photoId: state().photoId + 1,
+  });
+  reRender(view);
+});
+
+setState({ ...state(), counter: 10 });
+
+// 'render' (entrypoint)
+render(view(), selector);

@@ -7,4 +7,4 @@ export const deepFreeze = <T>(obj: T) => {
   return Object.freeze(obj);
 };
 
-export const Model = <T>(obj: T) => deepFreeze(obj);
+export const Immutable = <T>(obj: T) => deepFreeze(obj);
