@@ -2,9 +2,7 @@
 import { html, render, TemplateResult } from 'lit-html';
 import { repeat } from 'lit-html/directives/repeat';
 import { Immutable } from './helpers';
-import axios from 'axios';
 import { eitherGet } from './server';
-import { Either, right, left, isLeft, isRight } from 'fp-ts/Either';
 
 // typings
 interface Photo {
@@ -67,10 +65,10 @@ const getStuff = (view: View) =>
 
 const getPhotos = (view: View) =>
   eitherGet(
-    `https://jsonplaceholder.typicode.com/photos/${state().photoId}`,
+    `https://jsonplaceholder.typicode.com/phoos/${state().photoId}`,
 
     // decoders?
-    // maybe add an 'errorMessage
+    // maybe add an 'errorMessage' property
     (error) => ({
       id: '',
       title: `${JSON.stringify(error)}`,
