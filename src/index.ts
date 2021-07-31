@@ -65,7 +65,7 @@ const getStuff = (view: View) =>
 
 const getPhotos = (view: View) =>
   eitherGet(
-    `https://jsonplaceholder.typicode.com/phoos/${state().photoId}`,
+    `https://jsonplaceholder.typicode.com/photos/${state().photoId}`,
 
     // decoders?
     // maybe add an 'errorMessage' property
