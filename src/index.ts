@@ -1,6 +1,8 @@
 // Import lit-html functions
-import { html, render, TemplateResult } from 'lit-html';
-import { repeat } from 'lit-html/directives/repeat';
+// import { html, render, TemplateResult } from 'lit-html';
+// import { repeat } from 'lit-html/directives/repeat';
+import { html, render, TemplateResult } from 'lit'
+import { repeat } from 'lit/directives/repeat'
 import { Immutable } from './helpers';
 import { eitherGet } from './server';
 
