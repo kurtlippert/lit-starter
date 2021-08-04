@@ -2363,6 +2363,11 @@ format@^0.2.0:
   resolved "https://registry.yarnpkg.com/format/-/format-0.2.2.tgz#d6170107e9efdc4ed30c9dc39016df942b5cb58b"
   integrity sha1-1hcBB+nv3E7TDJ3DkBbflCtctYs=
 
+fp-ts-routing@0.5.4:
+  version "0.5.4"
+  resolved "https://registry.yarnpkg.com/fp-ts-routing/-/fp-ts-routing-0.5.4.tgz#5bcffcd4701a5cc50dc7c936f7e6eda923e8e3d0"
+  integrity sha512-M/gWge52Kk/8RkOblFMu4k6Ddljx9JCLOsSclurra+RJDnY4i/eUT74nEHRT0X/kzn6zsKQa5rCvUmcO7L8wuw==
+
 fp-ts@2.11.1:
   version "2.11.1"
   resolved "https://registry.yarnpkg.com/fp-ts/-/fp-ts-2.11.1.tgz#b1eeb2540728b6328542664888442f8f805d2443"
@@ -2772,6 +2777,11 @@ internal-slot@^1.0.3:
     get-intrinsic "^1.1.0"
     has "^1.0.3"
     side-channel "^1.0.4"
+
+io-ts@2.2.16:
+  version "2.2.16"
+  resolved "https://registry.yarnpkg.com/io-ts/-/io-ts-2.2.16.tgz#597dffa03db1913fc318c9c6df6931cb4ed808b2"
+  integrity sha512-y5TTSa6VP6le0hhmIyN0dqEXkrZeJLeC5KApJq6VLci3UEKF80lZ+KuoUs02RhBxNWlrqSNxzfI7otLX1Euv8Q==
 
 is-absolute-url@^2.0.0:
   version "2.1.0"

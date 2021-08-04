@@ -1,6 +1,5 @@
 import axios from 'axios';
 import { pipe } from 'fp-ts/function';
-import { toString } from 'ramda';
 import * as T from 'fp-ts/Task';
 import * as TE from 'fp-ts/TaskEither';
 
@@ -17,8 +16,8 @@ const eitherGet = <A>(
   pipe(
     TE.tryCatch(
       () => axios.get(url),
-      (reason) => ({
-        message: toString(reason),
+      (reason: any) => ({
+        message: reason,
         stackTrace: new Error().stack,
       }),
     ),

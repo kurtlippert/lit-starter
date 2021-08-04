@@ -16,6 +16,8 @@
     "typescript": "4.3.5"
   },
   "devDependencies": {
+    "fp-ts-routing": "0.5.4",
+    "io-ts": "2.2.16",
     "parcel": "2.0.0-beta.3.1"
   },
   "keywords": []
